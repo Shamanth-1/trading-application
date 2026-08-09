@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stock Price Chart</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <style>
+      header {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            border-bottom: 1px solid #e0e3eb;
+            justify-content: space-between;
+            padding: 12px;
+            flex-direction: row;
+            z-index: 1;
+        }
+        .modal-content {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input[readonly] {
+            background-color: #e9ecef;
+        }
+
+        .stock-details {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+         
+    </style>
+     
+</head>
+
+<body>
+    
+
+    <th:block th:include="headernav :: headernav"></th:block>
+<br>
+        <h1 class="text-center">Live Stock Price for Apple</h1>
+        <div class="stock-details">
+            <p class="text-center">Symbol: AAPL</p>
+            <p class="text-center">Current Price: <span id="currentPrice">Loading...</span></p>
+            <p class="text-center">Open: <span id="openPrice">Loading...</span></p>
+            <p class="text-center">High: <span id="highPrice">Loading...</span></p>
+            <p class="text-center">Low: <span id="lowPrice">Loading...</span></p>
+        </div>
+        
+        <div class="text-center mb-4">
+            <button id="buyButton" class="btn btn-primary">Buy</button>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <canvas id="stockChart" width="1000" height="400"></canvas>
+            </div>
+        </div>
+
+    <div id="buyModal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Buy Stock</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">X</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="buyForm">
+                        <div class="form-group">
+                            <label for="price">Price:</label>
+                            <input type="text" id="price" name="price" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Quantity:</label>
+                            <input type="number" id="quantity" name="quantity" min="1" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="total">Total Price:</label>
+                            <input type="text" id="total" name="total" class="form-control" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Buy</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+
+    const ctx =
+        document.getElementById('stockChart')
+        .getContext('2d');
+
+    let stockChart =
+        new Chart(ctx, {
+
+            type: 'line',
+
+            data: {
+
+                labels: [],
+
+                datasets: [{
+
+                    label: 'Apple Stock Price',
+
+                    data: [],
+
+                    borderColor: 'rgba(75, 192, 192, 1)',
+
+                    borderWidth: 2,
+
+                    fill: true,
+
+                    backgroundColor:
+                        'rgba(75, 192, 192, 0.2)',
+                }]
+            },
+
+            options: {
+
+                responsive: true,
+
+                scales: {
+
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+    let labels = [];
+
+    let chartData = [];
+
+    function generateRandomPrice() {
+
+        return (
+            210 + Math.random() * 10
+        ).toFixed(2);
+    }
+
+    function updateStockData() {
+
+        const currentPrice =
+            generateRandomPrice();
+
+        const open =
+            (currentPrice - 2).toFixed(2);
+
+        const high =
+            (parseFloat(currentPrice) + 3)
+            .toFixed(2);
+
+        const low =
+            (currentPrice - 4).toFixed(2);
+
+        // Update HTML
+        document.getElementById('currentPrice')
+            .innerText = currentPrice;
+
+        document.getElementById('openPrice')
+            .innerText = open;
+
+        document.getElementById('highPrice')
+            .innerText = high;
+
+        document.getElementById('lowPrice')
+            .innerText = low;
+
+        document.getElementById('price')
+            .value = currentPrice;
+
+        // Chart update
+        const currentTime =
+            new Date().toLocaleTimeString();
+
+        labels.push(currentTime);
+
+        chartData.push(currentPrice);
+
+        if (labels.length > 10) {
+
+            labels.shift();
+
+            chartData.shift();
+        }
+
+        stockChart.data.labels = labels;
+
+        stockChart.data.datasets[0].data =
+            chartData;
+
+        stockChart.update();
+    }
+
+    // Initial load
+    updateStockData();
+
+    // Auto refresh every 3 sec
+    setInterval(updateStockData, 3000);
+
+    const btn =
+        document.getElementById('buyButton');
+
+    const quantityInput =
+        document.getElementById('quantity');
+
+    const totalInput =
+        document.getElementById('total');
+
+    btn.onclick = function () {
+
+        $('#buyModal').modal('show');
+    }
+
+    quantityInput.oninput = function () {
+
+        const price =
+            parseFloat(
+                document.getElementById('price')
+                .value
+            );
+
+        const quantity =
+            parseInt(quantityInput.value);
+
+        const total =
+            price * quantity;
+
+        totalInput.value =
+            total.toFixed(2);
+    }
+
+    $('#buyForm').on('submit', function (e) {
+
+        e.preventDefault();
+
+        const price =
+            parseFloat(
+                document.getElementById('price')
+                .value
+            );
+
+        const quantity =
+            parseInt(quantityInput.value);
+
+        const total =
+            price * quantity;
+
+        alert(
+            `You bought ${quantity} shares at $${price.toFixed(2)} each.\nTotal: $${total.toFixed(2)}`
+        );
+
+        $('#buyModal').modal('hide');
+    });
+
+</script>
+</body>
+
+</html>
