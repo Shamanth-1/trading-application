@@ -81,7 +81,7 @@ This project is a trading application built using Java Spring Boot, HTML, CSS, J
 1. **Clone the repository**:
 
    ```sh 
-   https://git.chainsys.com/2024_java_batch/trading_application.git
+   https://github.com/Shamanth-1/trading-application.git
 
 2.  **Database**:
     Run the sql script in mysql database 
